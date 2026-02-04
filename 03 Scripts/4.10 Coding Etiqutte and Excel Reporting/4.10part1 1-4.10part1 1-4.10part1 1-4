@@ -1,0 +1,432 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "01015815-7cba-4ad1-a5ae-cd80483749a5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# import libraries\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import os\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "import scipy"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "7f301fe0-9102-4c05-bd8c-02b7af6dbf66",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "instacart = pd.read_pickle(r\"C:\\Users\\shais\\Documents\\01-12-2026 Instacart Basket Analysis\\02 Data\\Prepared Data\\instacart_4.9_2.pkl\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "f742055c-9c2f-4a32-9e42-17bdf3e1c570",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['user_id', 'gender', 'state', 'age', 'date_joined', 'n_dependants',\n",
+       "       'fam_status', 'income', '    ', 'order_id', 'order_number',\n",
+       "       'orders_day_of_week', 'order_hour_of_day', 'days_since_prior_order',\n",
+       "       'product_id', 'add_to_cart_order', 'reordered', 'product_name',\n",
+       "       'aisle_id', 'department_id', 'prices', 'price_range_loc', 'max_order',\n",
+       "       'loyalty_flag', 'avg_price', 'spending_flag', 'median_days',\n",
+       "       'frequency_flag'],\n",
+       "      dtype='object')"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "instacart.columns"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ede59289-523e-47ae-b185-a7254943acef",
+   "metadata": {},
+   "source": [
+    "Step 2 of assignment: adressing any PII data. I previously removed the first name and surname from the data already in the last exercise. There is no customers information expect for gender, state, age, family status and income"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "63f6a03f-efaf-43c4-b48a-101607c5cf13",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# step 3: regional data\n",
+    "Northeast = [\"Maine\", \"New Hampshire\", \"Vermont\", \"Massachusetts\", \"Rhode Island\", \"Connecticut\", \"New York\", \"Pennsylvania\", \"New Jersey\"]\n",
+    "Midwest = [\"Wisconsin\", \"Michigan\", \"Illinois\", \"Indiana\", \"Ohio\", \"North Dakota\", \"South Dakota\", \"Nebraska\", \"Kansas\", \"Minnesota\", \"Iowa\", \"Missouri\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "2f299867-e5f5-4643-b9cb-4c42bb77f342",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "South = [\"Delaware\", \"Maryland\", \"District of Columbia\", \"Virginia\", \"West Virginia\", \"North Carolina\", \"South Carolina\", \"Georgia\", \"Florida\",\n",
+    "         \"Kentucky\", \"Tennessee\", \"Mississippi\", \"Alabama\", \"Oklahoma\", \"Texas\", \"Arkansas\", \"Louisiana\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "c514459c-8250-4a9b-8321-0b4d06dee1cf",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "West = [\"Idaho\", \"Montana\", \"Wyoming\", \"Nevada\", \"Utah\", \"Colorado\", \"Arizona\", \"New Mexico\", \"Alaska\", \"Washington\", \"Oregon\", \"California\", \n",
+    "        \"Hawaii\"]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "11e21b82-7fff-44b1-ab44-100b20d0d4f7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def get_region(state): \n",
+    "    if state in Northeast:\n",
+    "        return \"Northeast\"\n",
+    "    elif state in Midwest:\n",
+    "        return \"Midwest\"\n",
+    "    elif state in South:\n",
+    "        return \"South\"\n",
+    "    elif state in West:\n",
+    "        return \"West\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "3750e7f6-c87e-4844-a6dc-4114b2d53507",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "region\n",
+       "South        3328322\n",
+       "West         2513421\n",
+       "Midwest      2314313\n",
+       "Northeast    1771633\n",
+       "Name: count, dtype: int64"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# create the region column\n",
+    "instacart[\"region\"] = instacart[\"state\"].apply(get_region)\n",
+    "instacart[\"region\"].value_counts(dropna=False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "4d1f263b-78e3-4301-93d3-4a9499ba703a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# crosstab for region and spending_flag\n",
+    "crosstab = pd.crosstab(instacart[\"region\"], instacart[\"spending_flag\"], dropna = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "bd03beee-a20d-4cbc-b689-0412a8e1e4ef",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "crosstab.to_clipboard()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "55c0c4d6-6be0-491c-96a4-10c35bbeebdb",
+   "metadata": {},
+   "source": [
+    "based on the crosstab, the South has the highest amount of High and Low spennders followed by the West. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "da745f56-5928-47e3-8996-fbf2d6b88159",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "count    63100.000000\n",
+       "mean        15.617670\n",
+       "std         16.674219\n",
+       "min          3.000000\n",
+       "25%          5.000000\n",
+       "50%          9.000000\n",
+       "75%         19.000000\n",
+       "max         99.000000\n",
+       "Name: order_id, dtype: float64"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# step 4: Remove customers w/ fewer than 5 orders\n",
+    "orders_per_customer = instacart.groupby(\"user_id\")[\"order_id\"].nunique()\n",
+    "orders_per_customer.describe()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "0c068406-78c4-417e-bb38-360c51d1f4a1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "instacart[\"order_count\"] = instacart[\"user_id\"].map(orders_per_customer)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "08eb77dc-4743-4677-8d6c-3da963f3fe36",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>user_id</th>\n",
+       "      <th>order_count</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>26711</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>26711</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>26711</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>26711</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>26711</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   user_id  order_count\n",
+       "0    26711            8\n",
+       "1    26711            8\n",
+       "2    26711            8\n",
+       "3    26711            8\n",
+       "4    26711            8"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "instacart[[\"user_id\", \"order_count\"]].head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "id": "44ec4577-9f21-49f5-8a2f-0456b8d28246",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "exclusion_flag\n",
+       "active           9488746\n",
+       "low _activity     438943\n",
+       "Name: count, dtype: int64"
+      ]
+     },
+     "execution_count": 31,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#creating new column\n",
+    "instacart[\"exclusion_flag\"] = instacart[\"order_count\"].apply(lambda x: \"low _activity\" if x < 5 else \"active\")\n",
+    "instacart[\"exclusion_flag\"].value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "id": "cd8c26df-a227-4a51-b6fd-0917c9570dea",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(9488746, 32)"
+      ]
+     },
+     "execution_count": 32,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "instacart_active = instacart[instacart[\"exclusion_flag\"] == \"active\"]\n",
+    "instacart_active.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "id": "95735d3a-2963-434e-b20d-cc506c2849b7",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['user_id', 'gender', 'state', 'age', 'date_joined', 'n_dependants',\n",
+       "       'fam_status', 'income', '    ', 'order_id', 'order_number',\n",
+       "       'orders_day_of_week', 'order_hour_of_day', 'days_since_prior_order',\n",
+       "       'product_id', 'add_to_cart_order', 'reordered', 'product_name',\n",
+       "       'aisle_id', 'department_id', 'prices', 'price_range_loc', 'max_order',\n",
+       "       'loyalty_flag', 'avg_price', 'spending_flag', 'median_days',\n",
+       "       'frequency_flag', 'region', 'order_count', 'low_activity_flag',\n",
+       "       'exclusion_flag'],\n",
+       "      dtype='object')"
+      ]
+     },
+     "execution_count": 33,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "instacart_active.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "id": "d982e5b8-b497-45ad-9af8-c13dfd82b324",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "5"
+      ]
+     },
+     "execution_count": 34,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "instacart_active.groupby(\"user_id\")[\"order_id\"].nunique().min()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "id": "bf4cf339-e814-4b1a-b6ea-9afbe49d9f4e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "instacart_active.to_pickle(r\"C:\\Users\\shais\\Documents\\01-12-2026 Instacart Basket Analysis\\02 Data\\Prepared Data\\instacart_active_customer.pkl\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "475bea4e-c023-4d77-a285-9b6b7f41143d",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [conda env:base] *",
+   "language": "python",
+   "name": "conda-base-py"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.13.9"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
